@@ -1,0 +1,207 @@
+.genre-section {
+  width: 100%;
+}
+
+.section-title {
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.genre-container {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  position: relative;
+  width: 100%;
+}
+
+.genre-left,
+.genre-right {
+  color: var(--text-gray);
+  border: none;
+  height: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  transition: linear 0.1s;
+  font-size: 3rem;
+  position: absolute;
+}
+.genre-left:hover,
+.genre-right:hover {
+  color: var(--text-color);
+}
+.genre-left {
+  grid-column: 1;
+  left: 0;
+  transform: translateX(-150%);
+}
+.genre-right {
+  grid-column: 3;
+  right: 0;
+  transform: translateX(150%);
+}
+.genre-slider {
+  overflow: hidden;
+  position: relative;
+  grid-column: 2;
+}
+/* Lưới 6 cột */
+.genre-list {
+  display: grid;
+
+  grid-template-rows: repeat(2, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 6rem) / 5);
+  gap: 10px; /* Khoảng cách giữa các ô */
+  overflow-x: hidden;
+}
+
+/* Thẻ Card */
+.genre-card {
+  position: relative;
+  display: block;
+  height: 120px; /* Chiều cao cố định cho đẹp */
+  border-radius: 8px;
+  overflow: hidden;
+  text-decoration: none;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+/* Hiệu ứng hover */
+.genre-card:hover {
+  transform: translateY(-5px); /* Nổi lên khi di chuột */
+}
+
+/* Tiêu đề trong card */
+.genre-card h3 {
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  margin: 16px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  max-width: 100%;
+  word-wrap: break-word;
+}
+
+/* Hình ảnh xoay góc */
+.genre-img {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  aspect-ratio: 1/1;
+  height: 80%;
+  transform: translate(10%, -50%);
+  z-index: 3;
+  background-color: #fff;
+  border-radius: 100%;
+}
+.genre-img::after,
+.genre-img::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  border-radius: inherit;
+}
+.genre-img::after {
+  background-color: rgba(255, 255, 255, 0.05);
+  width: 200%;
+  height: 200%;
+  z-index: -1;
+}
+.genre-img::before {
+  background-color: rgba(255, 255, 255, 0.1);
+  width: 300%;
+  height: 300%;
+  z-index: -2;
+}
+
+.genre-img img {
+  width: 100%;
+  height: 100%;
+  border-radius: 100%;
+  object-fit: cover;
+}
+
+/* --- MÀU SẮC TỰ ĐỘNG (Mỗi ô 1 màu khác nhau) --- */
+/* Quy tắc: Lặp lại màu sau mỗi 6 ô */
+
+.genre-card:nth-child(8) {
+  background-color: #5f040f;
+}
+.genre-card:nth-child(9) {
+  background-color: #0b7977;
+}
+.genre-card:nth-child(3) {
+  background-color: #a74b50;
+}
+.genre-card:nth-child(4) {
+  background-color: #6e2d71;
+}
+.genre-card:nth-child(5) {
+  background-color: #28224b;
+}
+.genre-card:nth-child(6) {
+  background-color: #7a9fc9;
+}
+.genre-card:nth-child(7) {
+  background-color: #a6764c;
+}
+.genre-card:nth-child(1) {
+  background-color: #27856a;
+}
+.genre-card:nth-child(2) {
+  background-color: #1e3264;
+}
+.genre-card:nth-child(10) {
+  background-color: #225382;
+}
+.genre-card:nth-child(11) {
+  background-color: #95858c;
+}
+.genre-card:nth-child(12) {
+  background-color: #064050;
+}
+
+/* --- RESPONSIVE (Co giãn trên màn hình nhỏ) --- */
+/* Laptop nhỏ: Xuống 4 cột */
+@media (max-width: 1200px) {
+  .genre-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Tablet: Xuống 3 cột */
+@media (max-width: 900px) {
+  .genre-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Mobile: Xuống 2 cột */
+@media (max-width: 600px) {
+  .genre-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .genre-card {
+    height: 120px;
+  } /* Card nhỏ lại */
+  .genre-card img {
+    width: 70px;
+    height: 70px;
+  } /* Ảnh nhỏ lại */
+  .genre-card h3 {
+    font-size: 16px;
+    margin: 10px;
+  }
+}

@@ -1,0 +1,275 @@
+/* --- 1. SIDEBAR --- */
+.sidebar {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.15),
+    rgba(0, 0, 0, 0.3)
+  );
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  border-radius: 1rem;
+  gap: 2.5rem;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+  color: white; /* Màu xanh ngọc của NCT */
+}
+
+.nav-menu {
+  list-style: none;
+}
+
+.nav-item {
+  padding: 1rem 15px;
+  border-radius: 25px; /* Bo tròn nút */
+  cursor: pointer;
+  color: #b3b3b3;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  transition: 0.1s;
+  font-size: 1.8rem;
+}
+
+.nav-item:hover {
+  color: white;
+}
+
+.nav-item.active {
+  background-color: rgba(255, 255, 255, 0.2); /* Nền xám nút đang chọn */
+  color: white; /* Chữ xanh */
+}
+
+.lib-title {
+  font-size: 12px;
+  color: var(--text-gray);
+  font-weight: bold;
+  padding-left: 15px;
+  margin-bottom: 1rem;
+}
+
+.login-prompt {
+  background-color: #2a2a2a;
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+  margin-top: auto; /* Đẩy xuống dưới */
+  margin-bottom: 100px; /* Chừa chỗ cho player */
+}
+
+.btn-login-sidebar {
+  background-color: white;
+  color: black;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-weight: bold;
+  margin-top: 10px;
+  cursor: pointer;
+  width: 100%;
+}
+/* --- SIDEBAR USER PROFILE --- */
+
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  background-color: transparent; /* Hoặc #1e1e1e nếu muốn nổi bật hơn */
+  border-radius: 8px;
+  margin-top: auto; /* Đẩy xuống đáy Sidebar */
+  cursor: pointer;
+  transition: background-color 0.2s;
+  position: relative;
+}
+.sidebar-user::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 2px;
+  width: 90%;
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateX(-50%);
+}
+.sidebar-user:hover {
+  background-color: var(--header-icon-bg); /* Sáng lên khi di chuột vào */
+}
+
+/* Avatar hình tròn */
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  background-color: #262c3a; /* Màu xanh tím than giống hình mẫu */
+  color: #dbe4ff; /* Màu chữ sáng nhẹ */
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  font-weight: 700;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+/* Thông tin text */
+.user-info {
+  flex: 1; /* Chiếm khoảng trống còn lại */
+  display: flex;
+  flex-direction: column;
+}
+
+.username {
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.user-status {
+  color: #888; /* Màu xám cho chữ phụ */
+  font-size: 12px;
+  margin: 2px 0 0 0;
+  font-weight: 500;
+}
+
+/* Icon mũi tên bên phải (trang trí) */
+.user-action {
+  color: #888;
+  font-size: 12px;
+}
+/* --- USER POPUP MENU --- */
+
+.user-popup {
+  display: none; /* Mặc định ẩn */
+  position: fixed; /* Cố định vị trí trên màn hình */
+  bottom: 90px; /* Cách đáy 90px (trên thanh Player) */
+  left: 10px; /* Cách lề trái */
+  width: 280px;
+  background-color: #1e1e1e; /* Màu nền tối */
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+  z-index: 999; /* Nổi lên trên cùng */
+  animation: popUp 0.2s ease-out;
+}
+
+@keyframes popUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header Info */
+.popup-header {
+  border-bottom: 1px solid #333;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.p-name {
+  color: white;
+  font-size: 16px;
+  margin: 0;
+  font-weight: 700;
+}
+.p-email {
+  color: #888;
+  font-size: 12px;
+  margin: 2px 0 0 0;
+}
+
+/* Menu List */
+.popup-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.menu-item:hover {
+  color: #00e5ce;
+}
+
+.menu-item .value {
+  color: #888;
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* Banner VIP */
+.popup-banner {
+  background: linear-gradient(135deg, #2a2a2a, #333);
+  padding: 12px;
+  border-radius: 8px;
+  margin: 15px 0;
+  border: 1px solid #444;
+}
+
+.popup-banner h4 {
+  color: #fff;
+  margin: 0 0 5px 0;
+  font-size: 13px;
+}
+
+.popup-banner p {
+  color: #aaa;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* Nút Logout */
+.btn-logout {
+  width: 100%;
+  padding: 10px;
+  background-color: #2a2a2a;
+  color: white;
+  border: 1px solid #333;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-logout:hover {
+  background-color: #ff4d4d; /* Màu đỏ khi hover */
+  border-color: #ff4d4d;
+}
+
+/* Footer Links */
+.popup-footer-links {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 11px;
+  color: #666;
+}
+
+.popup-footer-links a {
+  color: #666;
+  text-decoration: none;
+}
+.popup-footer-links a:hover {
+  text-decoration: underline;
+}
