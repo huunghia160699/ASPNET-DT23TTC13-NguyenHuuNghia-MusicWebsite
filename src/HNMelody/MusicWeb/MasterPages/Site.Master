@@ -1,0 +1,43 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.Master.cs" Inherits="MusicWeb.MasterPages.Site" %>
+<%@ Register Src="~/Controls/Sidebar.ascx" TagPrefix="uc" TagName="Sidebar" %>
+<%@ Register Src="~/Controls/Header.ascx" TagPrefix="uc" TagName="Header" %>
+<!DOCTYPE html>
+
+<html>
+<head runat="server">
+    <title>HN-Melody</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link href="<%= ResolveUrl("~/Content/css/Style.css") %>" rel="stylesheet" />
+    <asp:ContentPlaceHolder ID="head" runat="server">
+    </asp:ContentPlaceHolder>
+</head>
+<body data-theme="light">
+    <form id="form1" runat="server">
+        <div class="app-container">
+            <header>
+                <uc:Header ID="Header" runat="server" />
+            </header>
+
+            <aside class="sidebar">
+                <uc:Sidebar ID="Sidebar" runat="server" />
+            </aside>
+
+            <main class="main-content">
+                <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+            </main>
+
+            <footer>
+                <p>&copy; 2025 HN-Melody</p>
+            </footer>
+
+            <div class="modalOverlay"></div>
+        </div>
+    </form>
+    <script accesskey="javascript" src="<%= ResolveUrl("~/Content/js/main.js") %>"></script>
+</body>
+</html>

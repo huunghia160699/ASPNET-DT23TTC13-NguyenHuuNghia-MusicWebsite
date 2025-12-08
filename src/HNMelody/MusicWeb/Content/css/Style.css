@@ -1,0 +1,65 @@
+﻿@import url("layout.css");
+@import url("sidebar.css");
+@import url("header.css");
+/**/
+:root {
+    --dark-blue: #0f121c;
+    --white: #fff;
+    --white-sub: #fafafa;
+    --light-gray: #ccc;
+    --gray: #444;
+    /* 1. Khai báo bộ màu MẶC ĐỊNH (Giao diện Tối - Dark Mode) */
+    --bg-color: var(--dark-blue); 
+    --sidebar-bg: #1c1c1c; /* Nền thanh menu trái/dưới */
+    --text-color: #ffffff; /* Màu chữ chính */
+    --text-sub: #aaa; /* Màu chữ phụ */
+    --hover-bg: #353535; /* Màu nền khi di chuột */
+    --input-bg: #2a2a2a; /* Nền ô tìm kiếm */
+    --border-color: #333; /* Màu đường viền */
+    --accent-color: #00e5ce; /* Màu xanh chủ đạo */
+    --header-icon-bg: rgba(255, 255, 255, 0.1);
+    --text-gray: #777;
+}
+
+/* 2. Khai báo bộ màu SÁNG (Light Mode) - Khi thẻ body có thuộc tính data-theme="light" */
+[data-theme="light"] {
+    --bg-color: #ffffff; /* nền sáng */
+    --text-color: #222222; /* chữ chính (tối) */
+    --text-sub: #666666; /* chữ phụ (xám nhạt) */
+    --bg-color-active: rgba(0,0,0,0.15)
+}
+
+/* Theme tối */
+[data-theme="dark"] {
+    --bg-color: #1a1a1a; /* nền tối */
+    --text-color: #f5f5f5; /* chữ chính (sáng) */
+    --text-sub: #aaaaaa; /* chữ phụ (xám sáng) */
+    --bg-color-active: rgba(255,255,255,0.15)
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: "Segoe UI", sans-serif;
+}
+
+html {
+    font-size: 62.5%; /* 62.5% của 16px = 10px */
+}
+
+body {
+    background-color: var(--bg-color);
+}
+
+@keyframes popUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
