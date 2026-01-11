@@ -121,6 +121,7 @@ git clone [https://github.com/huunghia160699/ASPNET-DT23TTC13-NguyenHuuNghia-Mus
 
 **Nguyễn Hữu Nghĩa**
 
+- **MSSV:** 170123789
 - **Lớp:** DT23TTC13
 - **Email:** huunghia.160699@gmail.com
 
