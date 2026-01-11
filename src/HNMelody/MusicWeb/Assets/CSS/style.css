@@ -392,7 +392,7 @@ body {
     box-shadow: 0 20px 50px rgba(0,0,0,0.3);
     backdrop-filter: blur(50px);
     width: 80%; /* Giới hạn kích thước đĩa */
-    max-width: 5    00px;
+    max-width: 500px;
 }
 
 .vinyl-disk {
