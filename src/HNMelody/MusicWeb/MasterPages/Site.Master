@@ -1,43 +1,131 @@
 ﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.Master.cs" Inherits="MusicWeb.MasterPages.Site" %>
-<%@ Register Src="~/Controls/Sidebar.ascx" TagPrefix="uc" TagName="Sidebar" %>
-<%@ Register Src="~/Controls/Header.ascx" TagPrefix="uc" TagName="Header" %>
-<!DOCTYPE html>
 
-<html>
+<!-- Đăng ký các UserControl dùng chung cho toàn bộ website -->
+<%@ Register Src="~/Controls/Header.ascx" TagPrefix="uc" TagName="Header" %>
+<%@ Register Src="~/Controls/Player.ascx" TagPrefix="uc" TagName="Player" %>
+<%@ Register Src="~/Controls/RightSidebar.ascx" TagPrefix="uc" TagName="RightSidebar" %>
+
+<!DOCTYPE html>
+<html lang="vi">
 <head runat="server">
-    <title>HN-Melody</title>
+
+    <!-- Tiêu đề trang web -->
+    <title>HN-Melody | Đồ án Web Nghe Nhạc</title>
+
+    <!-- Thiết lập bảng mã tiếng Việt -->
     <meta charset="UTF-8" />
+
+    <!-- Giúp website hiển thị tốt trên điện thoại -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-    <link href="<%= ResolveUrl("~/Content/css/Style.css") %>" rel="stylesheet" />
-    <asp:ContentPlaceHolder ID="head" runat="server">
-    </asp:ContentPlaceHolder>
+
+    <!-- Icon hiển thị trên tab trình duyệt -->
+    <link rel="icon" href="<%= ResolveUrl("~/Content/Icon/favicon.ico") %>" />
+
+    <!-- Kết nối Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Font chữ chính của website -->
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet" />
+
+    <!-- Thư viện icon Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <!-- File CSS chính của website -->
+    <link href="<%= ResolveUrl("~/Content/css/Side.Master.css") %>" rel="stylesheet" />
+
+    <!-- Placeholder để các trang con thêm CSS hoặc script riêng -->
+    <asp:ContentPlaceHolder ID="head" runat="server" />
 </head>
+
 <body data-theme="light">
+
+    <!-- Form bắt buộc trong ASP.NET WebForms -->
     <form id="form1" runat="server">
+
+        <!-- ScriptManager dùng cho WebMethod và AJAX -->
+        <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePageMethods="true" />
+
+        <!-- Khung tổng của ứng dụng -->
         <div class="app-container">
-            <header>
+
+            <!-- Phần header trên cùng (logo, tìm kiếm, tài khoản) -->
+            <header id="header">
                 <uc:Header ID="Header" runat="server" />
             </header>
 
-            <aside class="sidebar">
-                <uc:Sidebar ID="Sidebar" runat="server" />
-            </aside>
 
-            <main class="main-content">
+            <!-- Nội dung chính của từng trang -->
+            <main id="main">
                 <asp:ContentPlaceHolder ID="MainContent" runat="server" />
             </main>
 
-            <footer>
-                <p>&copy; 2025 HN-Melody</p>
+            <!-- Sidebar bên phải (queue, bài đang phát, gợi ý) -->
+            <aside id="rightSidebar">
+                <uc:RightSidebar ID="RightSidebar" runat="server" />
+            </aside>
+
+            <!-- Thanh phát nhạc phía dưới -->
+            <footer id="playerBar">
+
+                <!-- Giao diện điều khiển phát nhạc -->
+                <uc:Player ID="Player" runat="server" />
+
+                <!-- Thẻ audio HTML5 để phát nhạc -->
+                <audio id="audioPlayer" preload="metadata">
+                    <source type="audio/mpeg" />
+                </audio>
             </footer>
 
-            <div class="modalOverlay"></div>
+            <div class="modal-overlay" id="authModal" style="display: none;">
+                <div class="modal-box">
+                    <button class="modal-close-btn" onclick="app.toggleAuthModal(false)">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+
+                    <h3 class="modal-title" id="modalTitle">Đăng nhập</h3>
+
+
+                    <div class="modal-body">
+                        <div id="groupFullName" style="display: none;">
+                            <input type="text" id="authFullName" class="modal-input" placeholder="Họ và tên hiển thị" />
+                        </div>
+
+                        <input type="text" id="authUsername" class="modal-input" placeholder="Tên đăng nhập" />
+
+                        <input type="password" id="authPassword" class="modal-input" placeholder="Mật khẩu" />
+
+                    <div id="authMessage" class="auth-message" style="display: none; color: red; margin-bottom: 10px;"></div>
+
+
+                        <button class="btn btn-primary modal-submit" id="modalSubmit" onclick="app.submitAuth()">
+                            Đăng nhập
+                        </button>
+                    </div>
+
+                    <div class="modal-footer">
+                        <p id="textToRegister">
+                            Chưa có tài khoản? 
+                <a href="javascript:void(0)" onclick="app.switchAuthMode('register')">Đăng ký ngay</a>
+                        </p>
+                        <p id="textToLogin" style="display: none;">
+                            Đã có tài khoản? 
+                <a href="javascript:void(0)" onclick="app.switchAuthMode('login')">Đăng nhập</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+
         </div>
     </form>
-    <script accesskey="javascript" src="<%= ResolveUrl("~/Content/js/main.js") %>"></script>
+    <script>
+        window.serverState = {
+            isLogin: <%= IsUserLoggedIn.ToString().ToLower() %>, // Chuyển bool C# thành true/false JS
+            userName: '<%= CurrentUserName %>'
+        };
+</script>
+    <!-- File JavaScript chính xử lý logic của app -->
+    <script src="<%= ResolveUrl("~/Content/js/Side.Master.js") %>"></script>
 </body>
 </html>
