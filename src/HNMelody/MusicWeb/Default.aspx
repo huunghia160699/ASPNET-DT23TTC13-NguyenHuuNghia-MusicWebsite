@@ -179,6 +179,8 @@
                     <div class="content-tabs">
                         <!-- Tab tất cả -->
                         <div class="tab-item active" id="tabAll" data-tab="all" onclick="app.switchTab('all')">Tất cả bài hát</div>
+                        <!-- Tab yêu thích -->
+                        <div class="tab-item" id="tabFav" data-tab="fav" onclick="app.switchTab('fav')">Bài hát Yêu thích</div>
                         <!-- Tab tìm kiếm -->
                         <div class="tab-item hidden" id="tabSearch" data-tab="search" onclick="app.switchTab('search')">Kết quả tìm kiếm</div>
 

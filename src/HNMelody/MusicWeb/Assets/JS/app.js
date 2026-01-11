@@ -12,16 +12,15 @@ const app = {
     // Lấy cấu hình đã lưu, nếu không có thì tạo object rỗng
     config: JSON.parse(localStorage.getItem(PLAYER_STORAGE_KEY)) || {},
 
-    songs: [],              // Danh sách bài hát gốc
+    songs: [],              // Danh sách bài hát gốc (Tất cả)
     searchSongs: [],        // Danh sách bài hát tìm kiếm
+    favorites: [],          // Mảng chứa ID các bài hát yêu thích [1, 5, 10...]
     currentTab: 'all',      // Tab hiện tại: 'all', 'search', 'fav'
 
     user: null,             // Thông tin người dùng đăng nhập
     authMode: 'login',      // Chế độ xác thực: 'login' hoặc 'register'
 
     // ================= 2. CÁC PHẦN TỬ HTML (DOM) =================
-    // Lưu các phần tử vào biến để sử dụng lại
-
     // --- Trình phát nhạc ---
     audio: document.getElementById('audio'),
     cdThumb: document.getElementById('cdThumb'),
@@ -91,6 +90,9 @@ const app = {
     defineProperties: function () {
         Object.defineProperty(this, 'currentSong', {
             get: function () {
+                // Nếu đang ở tab tìm kiếm thì lấy trong list tìm kiếm, ngược lại lấy list gốc
+                // Tuy nhiên để đơn giản và tránh lỗi index, ta luôn tham chiếu vào this.songs 
+                // vì index được đồng bộ khi loadSongs
                 return this.songs[this.currentIndex];
             }
         });
@@ -107,7 +109,13 @@ const app = {
         const savedUser = localStorage.getItem('user');
         if (savedUser) {
             this.user = JSON.parse(savedUser);
-            this.loginSuccess();
+
+            // Kiểm tra Role để set quyền (true = Admin)
+            const isAdmin = (this.user.Role === 'Admin');
+            this.loginSuccess(isAdmin);
+        } else {
+            // Nếu chưa đăng nhập, ẩn tab Yêu thích
+            document.getElementById('tabFav').style.display = 'none';
         }
 
         // 3. Lắng nghe các sự kiện
@@ -119,7 +127,7 @@ const app = {
         // 5. Chọn tab mặc định
         this.switchTab("all");
 
-        // 6. Khởi tạo menu bộ lọc
+        // 6. Khởi tạo menu bộ lọc (Sort)
         this.setupCustomDropdown();
     },
 
@@ -128,7 +136,7 @@ const app = {
 
     openModal: function () {
         this.modal.classList.add('open');
-        this.loadTestAccounts(); // Tải danh sách tài khoản mẫu
+        this.loadTestAccounts(); // Tải danh sách tài khoản mẫu (nếu có)
     },
 
     closeModal: function () {
@@ -152,10 +160,10 @@ const app = {
             this.groupFullname.classList.remove('hidden');
             this.btnSubmit.innerText = "Đăng Ký";
         }
-        this.authMsg.innerText = ""; // Xóa thông báo lỗi
+        this.authMsg.innerText = ""; // Xóa thông báo lỗi cũ
     },
 
-    // Xử lý sự kiện nút Submit
+    // Xử lý sự kiện nút Submit form Auth
     handleAuthSubmit: function (e) {
         if (e) e.preventDefault(); // Ngăn chặn reload trang
 
@@ -181,13 +189,20 @@ const app = {
                 .then(res => res.json())
                 .then(data => {
                     if (data.d) {
+                        // data.d là chuỗi JSON user info trả về từ server
                         _this.user = JSON.parse(data.d);
-                        _this.loginSuccess(true);
+
+                        // Gọi hàm xử lý thành công (Kiểm tra xem có phải Admin không)
+                        const isAdmin = (_this.user.Role === 'Admin');
+                        _this.loginSuccess(isAdmin);
+
+                        alert("Đăng nhập thành công!");
                     } else {
                         _this.authMsg.innerText = "Sai tài khoản hoặc mật khẩu!";
                         _this.authMsg.style.color = "red";
                     }
-                });
+                })
+                .catch(err => console.log(err));
         } else {
             // Xử lý Đăng ký
             if (!n) { _this.authMsg.innerText = "Nhập họ tên!"; return; }
@@ -211,52 +226,64 @@ const app = {
     },
 
     // Xử lý khi đăng nhập thành công
-    loginSuccess: function (redirect = false) {
+    // redirect: có chuyển trang sang Admin ngay không
+    loginSuccess: function (isAdmin = false) {
+        // Lưu vào LocalStorage
         localStorage.setItem('user', JSON.stringify(this.user));
 
-        // Kiểm tra quyền Admin
-        if (this.user.username.toLowerCase() === 'admin') {
-            if (redirect) {
-                window.location.href = 'Admin.aspx';
-                return;
-            }
-        }
+        // Nếu là Admin thì chuyển trang (chỉ khi login trực tiếp)
+        // Lưu ý: Nếu F5 lại trang thì isAdmin vẫn true nhưng không nên redirect
+        /* Nếu bạn muốn khi bấm Login -> Tự sang Admin: Bật đoạn dưới
+           if (isAdmin && window.location.pathname.indexOf('Admin.aspx') === -1) {
+               window.location.href = 'Admin.aspx';
+               return;
+           }
+        */
 
-        // Cập nhật giao diện người dùng
+        // Cập nhật giao diện Header
         this.btnLoginBtn.classList.add('hidden');
         this.userProfile.classList.remove('hidden');
-        this.userFullName.innerText = this.user.fullname;
-        this.userAvatar.src = this.user.avatar;
+        this.userFullName.innerText = this.user.FullName || this.user.fullname; // Tùy key server trả về
+        this.userAvatar.src = this.user.Avatar || this.user.avatar || 'Assets/Images/default-avatar.png';
 
-        if (this.user.username.toLowerCase() === 'admin') {
+        // Nếu là Admin, thêm nút vào Menu dropdown
+        if (isAdmin) {
             const dropdown = document.querySelector('.profile-dropdown');
-            // Kiểm tra chưa có nút thì mới thêm
-            if (!dropdown.querySelector('.admin-link')) {
+            // Kiểm tra chưa có nút thì mới thêm để tránh trùng lặp
+            if (dropdown && !dropdown.querySelector('.admin-link')) {
                 const adminBtn = document.createElement('div');
                 adminBtn.className = 'admin-link';
                 adminBtn.innerHTML = '<i class="fa-solid fa-user-gear"></i> Quản trị';
                 adminBtn.onclick = function () { window.location.href = "Admin.aspx"; };
-
                 // Chèn lên đầu menu
                 dropdown.insertBefore(adminBtn, dropdown.firstChild);
             }
         }
 
         this.closeModal();
+
+        // Hiện Tab Yêu thích
+        const tabFav = document.getElementById('tabFav');
+        if (tabFav) tabFav.style.display = 'inline-block';
+
+        // Tải danh sách bài đã like (để hiện tim đỏ)
+        this.fetchFavorites();
     },
 
     // Đăng xuất
     logout: function () {
+        // 1. Xóa sạch dữ liệu user
         this.user = null;
         localStorage.removeItem('user');
-        this.btnLoginBtn.classList.remove('hidden');
-        this.userProfile.classList.add('hidden');
+
+        // 2. Load lại trang để reset toàn bộ trạng thái JS
+        window.location.reload();
     },
 
-    // Tải danh sách tài khoản mẫu
+    // Tải danh sách tài khoản mẫu (Demo)
     loadTestAccounts: function () {
         const listContainer = document.getElementById('testAccountList');
-        if (listContainer.innerHTML.trim() !== "") return;
+        if (!listContainer || listContainer.innerHTML.trim() !== "") return;
 
         fetch('Default.aspx/GetTestAccounts', {
             method: 'POST',
@@ -264,10 +291,11 @@ const app = {
         })
             .then(res => res.json())
             .then(data => {
+                if (!data.d) return;
                 const accs = JSON.parse(data.d);
                 const html = accs.map(acc => `
                 <div class="acc-item" onclick="app.fillLogin('${acc.u}', '${acc.p}')">
-                    <img src="${acc.a}" onError="this.src='Assets/Images/default-avatar.jpg'">
+                    <img src="${acc.a}" onError="this.src='Assets/Images/default-avatar.png'">
                     <div class="acc-info">
                         <b>${acc.n}</b>
                         <span>@${acc.u}</span>
@@ -301,7 +329,7 @@ const app = {
                     // Trường hợp 1: Tải lần đầu (Lấy tất cả)
                     _this.songs = result;
 
-                    // Khôi phục bài hát lần trước (nếu có)
+                    // Khôi phục bài hát lần trước (nếu có) từ LocalStorage
                     const savedIndex = _this.config.currentIndex;
                     if (savedIndex !== undefined && savedIndex < _this.songs.length) {
                         _this.currentIndex = savedIndex;
@@ -309,11 +337,10 @@ const app = {
                         _this.currentIndex = 0;
                     }
 
-                    if (_this.currentTab === 'all') {
-                        _this.renderPlaylist(_this.songs, _this.allSongsContainer);
-                    }
+                    // Render danh sách Tất cả
+                    _this.renderPlaylist(_this.songs, _this.allSongsContainer);
 
-                    // Tải bài hát nhưng không tự động phát (false)
+                    // Tải bài hát nhưng không tự động phát (false) để tránh ồn khi mới vào
                     _this.loadCurrentSong(false);
 
                 } else {
@@ -323,30 +350,71 @@ const app = {
                     _this.switchTab('search');
                 }
             })
-            .catch(err => console.error("Lỗi Fetch:", err));
+            .catch(err => console.error("Lỗi Fetch Songs:", err));
     },
 
-    // Hiển thị danh sách bài hát ra HTML
+    // Hàm tải danh sách ID bài hát yêu thích
+    fetchFavorites: function () {
+        console.log(this.user)
+
+        if (!this.user) return;
+
+        fetch('Default.aspx/GetFavoriteSongIDs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: this.user.UserID })
+        })
+            .then(res => res.json())
+            .then(data => {
+                // Server trả về mảng ID ví dụ: [1, 5, 10]
+                console.log(this.favorites)
+                this.favorites = JSON.parse(data.d);
+
+                // Render lại trang chủ (Tab All) để cập nhật trạng thái tim đỏ
+                this.renderPlaylist(this.songs, this.allSongsContainer);
+
+                // Nếu đang ở tab Fav thì render lại tab Fav luôn
+                if (this.currentTab === 'fav') {
+                    this.renderFavSongs();
+                }
+            });
+    },
+
+    // Hiển thị danh sách bài hát ra HTML (Dùng chung cho All, Search, Fav)
     renderPlaylist: function (data, target) {
         const htmls = data.map((song, index) => {
+
+            // Logic kiểm tra yêu thích
+            const isLiked = this.user && this.favorites.includes(song.id);
+            const heartClass = isLiked ? 'fa-solid fa-heart active' : 'fa-regular fa-heart';
+
+            // Tìm index thực sự trong mảng gốc this.songs để active bài đang hát chính xác
+            // Vì khi ở tab Search hoặc Fav, index của map sẽ khác index của songs gốc
+            const realIndex = this.songs.findIndex(s => s.id === song.id);
+            const isActive = (realIndex === this.currentIndex);
+
             return `
-                <li class="song-item" data-index="${index}">
-                    <div class="song-img">
-                        <img src="${song.thumb}" alt="${song.title}">
-                        <div class="disk-wave">
-                            <span></span><span></span><span></span><span></span>
-                        </div>
+            <li class="song-item ${isActive ? 'active' : ''}" data-index="${realIndex}" data-id="${song.id}">
+                <div class="song-img">
+                    <img src="${song.thumb}" alt="${song.title}">
+                    <div class="disk-wave">
+                        <span></span><span></span><span></span><span></span>
                     </div>
-                    
-                    <div class="song-info">
-                        <h4>${song.title}</h4>
-                        <p>${song.artist}</p>
-                        <div class="song-duration">
-                            <span>${this.formatTime(song.duration)}</span>
-                        </div>
+                </div>
+                
+                <div class="song-info">
+                    <h4>${song.title}</h4>
+                    <p>${song.artist}</p>
+                    <div class="song-duration">
+                        <span>${this.formatTime(song.duration)}</span>
                     </div>
-                </li>
-            `;
+                </div>
+
+                <div class="btn-fav ${isLiked ? 'active' : ''}" data-id="${song.id}">
+                    <i class="${heartClass}"></i>
+                </div>
+            </li>
+        `;
         });
 
         target.innerHTML = htmls.length > 0
@@ -354,8 +422,15 @@ const app = {
             : '<div style="color:#aaa; padding:20px; font-size: 1.6rem; text-align: center;">Không tìm thấy bài hát nào</div>';
     },
 
+    // Hàm render riêng cho tab Yêu thích
+    renderFavSongs: function () {
+        // Lọc các bài hát trong this.songs mà có ID nằm trong this.favorites
+        const favList = this.songs.filter(song => this.favorites.includes(song.id));
+        this.renderPlaylist(favList, this.favSongsContainer);
+    },
 
-    // ================= 7. XỬ LÝ SỰ KIỆN =================
+
+    // ================= 7. XỬ LÝ SỰ KIỆN (EVENTS) =================
     handleEvents: function () {
         const _this = this;
 
@@ -370,6 +445,8 @@ const app = {
             _this.btnPlay.innerHTML = '<i class="fa-solid fa-pause"></i>';
             _this.btnPlay.classList.add('playing');
             _this.cdThumb.classList.add('playing');
+
+            document.querySelector(".song-item.active").classList.add("playing")
         };
 
         _this.audio.onpause = function () {
@@ -377,6 +454,7 @@ const app = {
             _this.btnPlay.innerHTML = '<i class="fa-solid fa-play"></i>';
             _this.btnPlay.classList.remove('playing');
             _this.cdThumb.classList.remove('playing');
+            document.querySelector(".song-item.active").classList.remove("playing")
         };
 
         // --- B. Chuyển bài ---
@@ -414,12 +492,11 @@ const app = {
             }
         };
 
-        // --- D. Tua nhạc ---
+        // --- D. Tua nhạc (Seek) ---
         const handleSeek = (e) => {
             if (!_this.audio.duration) return;
-
             const rect = _this.progressTrack.getBoundingClientRect();
-            // Tính phần trăm vị trí chuột
+            // Tính % vị trí click chuột trên thanh
             const percent = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
 
             _this.progressFill.style.width = (percent * 100) + "%";
@@ -463,29 +540,64 @@ const app = {
             }
         };
 
-        // --- E. Chọn bài hát từ danh sách ---
+        // --- E. Chọn bài hát từ danh sách (Xử lý Play và Like) ---
         const contentSongs = document.querySelector('.content-songs');
 
-        contentSongs.onclick = function (e) {
-            const songNode = e.target.closest('.song-item');
-            if (!songNode) return;
+        if (contentSongs) {
+            contentSongs.onclick = function (e) {
+                const songNode = e.target.closest('.song-item');
+                const favBtn = e.target.closest('.btn-fav'); // Bắt sự kiện nút tim
+                const optionBtn = e.target.closest('.option'); // Bắt sự kiện nút 3 chấm (nếu có)
 
-            const newIndex = Number(songNode.dataset.index);
-            _this.currentIndex = newIndex;
+                // Nếu click ra ngoài bài hát hoặc click vào nút option thì bỏ qua
+                if (!songNode || optionBtn) return;
 
-            // Tải bài hát và tự động phát (true)
-            _this.loadCurrentSong(true);
+                // -----------------------------------------------------------
+                // 1. XỬ LÝ KHI BẤM VÀO NÚT TIM (YÊU THÍCH)
+                // -----------------------------------------------------------
+                if (favBtn) {
+                    e.stopPropagation(); // Chặn sự kiện nổi bọt để không phát nhạc
 
-            // Nếu đang ở tab Tìm kiếm thì chuyển về tab Tất cả
-            const parentList = songNode.closest('.song-list');
-            if (parentList.id === 'searchResultContainer') {
-                _this.switchTab('all');
-                _this.searchInput.value = "";
-                _this.scrollToActiveSong();
-            }
-        };
+                    // Lấy ID bài hát từ data-id
+                    const songId = favBtn.dataset.id;
 
-        // --- F. Tìm kiếm ---
+                    // Gọi hàm xử lý like/unlike
+                    _this.toggleFavorite(songId, favBtn);
+
+                    return; // DỪNG LẠI NGAY, không chạy code phát nhạc
+                }
+
+                // -----------------------------------------------------------
+                // 2. XỬ LÝ KHI BẤM VÀO BÀI HÁT (PHÁT NHẠC)
+                // -----------------------------------------------------------
+                if (songNode) {
+                    const newIndex = Number(songNode.dataset.index);
+
+                    // Cập nhật bài hát hiện tại
+                    _this.currentIndex = newIndex;
+
+                    // Tải thông tin và TỰ ĐỘNG PHÁT (true)
+                    _this.loadCurrentSong(true);
+
+                    // --- Xử lý riêng trường hợp đang ở Tab Tìm kiếm ---
+                    const parentList = songNode.closest('.song-list');
+                    if (parentList && parentList.id === 'searchResultContainer') {
+                        // 1. Chuyển về tab Tất cả
+                        _this.switchTab('all');
+
+                        // 2. Xóa từ khóa tìm kiếm
+                        _this.searchInput.value = "";
+
+                        // 3. Cuộn đến bài hát đang phát (đợi 300ms cho Tab chuyển xong)
+                        setTimeout(() => {
+                            _this.scrollToActiveSong();
+                        }, 300);
+                    }
+                }
+            };
+        }
+
+        // --- F. Tìm kiếm (Live Search) ---
         let searchTimeout;
         _this.searchInput.oninput = function (e) {
             const keyword = e.target.value.trim();
@@ -506,11 +618,11 @@ const app = {
 
     // ================= 8. CÁC HÀM HỖ TRỢ =================
 
-    // Tải thông tin bài hát hiện tại
-    // Tham số shouldPlay: true = tự phát nhạc, false = chỉ tải dữ liệu
+    // Tải thông tin bài hát hiện tại lên Player
     loadCurrentSong: function (shouldPlay = false) {
         if (!this.currentSong) return;
 
+        // Lưu vị trí bài hát vào storage để F5 không mất
         this.setConfig('currentIndex', this.currentIndex);
 
         // 1. Ẩn ảnh đĩa than và dừng nhạc cũ
@@ -518,7 +630,7 @@ const app = {
         this.cdThumb.getAnimations().forEach(anim => anim.pause());
         this.audio.pause();
 
-        // Tạo độ trễ để hiệu ứng chuyển bài mượt mà hơn
+        // Tạo độ trễ nhỏ để hiệu ứng chuyển bài mượt mà hơn
         setTimeout(() => {
             // 2. Cập nhật thông tin bài hát
             this.heroTitle.innerText = this.currentSong.title;
@@ -532,10 +644,12 @@ const app = {
                 this.durationEl.innerText = this.formatTime(this.currentSong.duration);
             }
 
-            // 3. Cập nhật trạng thái active trong danh sách
+            // 3. Cập nhật trạng thái active trong danh sách (đổi màu xanh)
+            // Xóa active cũ
             const oldActive = document.querySelector('.song-item.active');
             if (oldActive) oldActive.classList.remove('active');
 
+            // Thêm active mới (dùng data-index để chọn đúng bài)
             const newItems = document.querySelectorAll(`.song-item[data-index="${this.currentIndex}"]`);
             newItems.forEach(item => item.classList.add('active'));
 
@@ -545,7 +659,7 @@ const app = {
             requestAnimationFrame(() => {
                 this.cdThumbInner.style.opacity = 1;
 
-                // Chỉ phát nhạc nếu được yêu cầu
+                // Chỉ phát nhạc nếu tham số shouldPlay = true
                 if (shouldPlay) {
                     try {
                         this.audio.play();
@@ -555,7 +669,7 @@ const app = {
                 }
             });
 
-        }, 400); // Độ trễ 400ms
+        }, 300); // Độ trễ
     },
 
     nextSong: function () {
@@ -598,15 +712,62 @@ const app = {
         return `${mins < 10 ? '0' + mins : mins}:${secs < 10 ? '0' + secs : secs}`;
     },
 
-    formatNumber: function (num) {
-        if (!num) return 0;
-        if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-        if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
-        return num;
+    // Hàm gọi API Thả tim/Hủy tim
+    toggleFavorite: function (songId, btnElement) {
+        // 1. Chưa đăng nhập thì bắt đăng nhập
+        if (!this.user) {
+            alert("Vui lòng đăng nhập để sử dụng tính năng Yêu thích!");
+            this.modal.style.display = 'flex'; // Mở form login
+            return;
+        }
+
+        // 2. Gọi Server xử lý (WebMethod)
+        const url = 'Default.aspx/ToggleFavorite';
+        const data = { userId: this.user.UserID, songId: parseInt(songId) };
+
+        console.log("Đang gửi lên Server:", {
+            userId: this.user.UserID,
+            songId: parseInt(songId)
+        });
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+            .then(res => res.json())
+            .then(result => {
+                const isLiked = result.d; // Server trả về true (đã like) hoặc false (đã bỏ like)
+
+                // 3. Cập nhật giao diện ngay lập tức (DOM)
+                const icon = btnElement.querySelector('i');
+                if (isLiked) {
+                    btnElement.classList.add('active');
+                    icon.classList.remove('fa-regular');
+                    icon.classList.add('fa-solid', 'fa-heart');
+
+                    // Thêm vào mảng favorites local
+                    if (!this.favorites.includes(parseInt(songId))) this.favorites.push(parseInt(songId));
+                } else {
+                    btnElement.classList.remove('active');
+                    icon.classList.remove('fa-solid', 'fa-heart');
+                    icon.classList.add('fa-regular', 'fa-heart');
+
+                    // Xóa khỏi mảng favorites local
+                    this.favorites = this.favorites.filter(id => id !== parseInt(songId));
+                }
+
+                // Nếu đang ở Tab Yêu thích thì render lại để mất bài vừa bỏ tim ngay lập tức
+                if (this.currentTab === 'fav') {
+                    this.renderFavSongs();
+                }
+            })
+            .catch(err => console.log(err));
     },
 
     // Xử lý sắp xếp bài hát
     handleSort: function (type) {
+        // Lưu lại ID bài đang hát để không bị mất vị trí
         const currentSongID = this.currentSong ? this.currentSong.id : null;
 
         switch (type) {
@@ -617,29 +778,36 @@ const app = {
                 this.songs.sort((a, b) => b.views - a.views);
                 break;
             case 'favs':
-                this.songs.sort((a, b) => b.favs - a.favs);
+                // Sắp xếp theo số lượng like (giả sử có trường favs trong object song)
+                this.songs.sort((a, b) => (b.favs || 0) - (a.favs || 0));
                 break;
             default:
+                // Mặc định sắp xếp theo ID
                 this.songs.sort((a, b) => a.id - b.id);
                 break;
         }
 
-        // Cập nhật lại chỉ số bài hát hiện tại sau khi sắp xếp
+        // Cập nhật lại chỉ số currentIndex sau khi mảng songs bị xáo trộn
         if (currentSongID) {
             this.currentIndex = this.songs.findIndex(s => s.id === currentSongID);
         }
 
+        // Render lại danh sách
         this.renderPlaylist(this.songs, this.allSongsContainer);
+
+        // Cuộn tới bài đang hát
         setTimeout(() => this.scrollToActiveSong(), 500);
     },
 
-    // Khởi tạo menu bộ lọc
+    // Khởi tạo menu bộ lọc (Dropdown)
     setupCustomDropdown: function () {
         const dropdown = document.querySelector('.custom-dropdown');
         const trigger = document.getElementById('dropdownTrigger');
         const selectedText = document.getElementById('selectedText');
         const items = document.querySelectorAll('.dropdown-item');
         const _this = this;
+
+        if (!trigger) return;
 
         trigger.onclick = function (e) {
             e.stopPropagation();
@@ -658,20 +826,22 @@ const app = {
         });
 
         document.addEventListener('click', function (e) {
-            if (!dropdown.contains(e.target)) {
+            if (dropdown && !dropdown.contains(e.target)) {
                 dropdown.classList.remove('open');
             }
         });
     },
 
-    // Chuyển đổi Tab
+    // Chuyển đổi Tab (Quan trọng: Đã sửa lại để gọi renderFavSongs)
     switchTab: function (tabName) {
         this.currentTab = tabName;
 
+        // Active style cho tab
         document.querySelectorAll('.tab-item').forEach(tab => {
             tab.classList.toggle('active', tab.dataset.tab === tabName);
         });
 
+        // Ẩn tất cả danh sách
         document.querySelectorAll(".song-list").forEach(list => list.classList.add("hidden"));
 
         if (tabName == "all") {
@@ -682,11 +852,13 @@ const app = {
             this.tabSearch.classList.remove("hidden");
         } else if (tabName == "fav") {
             this.favSongsContainer.classList.remove("hidden");
+            // Render lại danh sách yêu thích khi bấm vào tab
+            this.renderFavSongs();
         }
-    }
+    },
 };
 
-// Khởi chạy ứng dụng khi tải xong
+// Khởi chạy ứng dụng khi tải xong DOM
 document.addEventListener('DOMContentLoaded', function () {
     app.start();
 });

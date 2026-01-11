@@ -63,9 +63,9 @@ INSERT INTO Users (Username, Password, FullName, Role)
 VALUES ('admin', '123', N'Administrator', 'Admin'), 
        ('nghia', '123', N'Nghĩa Dev', 'User');
 
--- B. Thêm 100 User ảo (Để test hệ thống xếp hạng, lượt xem)
+-- B. Thêm 5 User ảo (Để test hệ thống xếp hạng, lượt xem)
 DECLARE @i INT = 1;
-WHILE @i <= 100
+WHILE @i <= 5
 BEGIN
     DECLARE @UserName NVARCHAR(50) = 'user' + CAST(@i AS NVARCHAR(10));
     IF NOT EXISTS (SELECT 1 FROM Users WHERE Username = @UserName)
@@ -81,7 +81,7 @@ BEGIN
     END
     SET @i = @i + 1;
 END
-PRINT N'Đã tạo xong 100 User ảo.';
+PRINT N'Đã tạo xong 5 User ảo.';
 
 -- C. Thêm Nghệ sĩ & Bài hát (20 Nghệ sĩ - Dữ liệu phong phú)
 DECLARE @ArtID INT;
@@ -259,48 +259,10 @@ INSERT INTO Songs (Title, ArtistID, Url, Image, Duration) VALUES
 (N'Ánh Nắng Của Anh', @ArtID, '/Assets/Songs/song1.mp3', '/Assets/Images/Songs/anca.jpg', 230),
 (N'Ngày Đầu Tiên', @ArtID, '/Assets/Songs/song1.mp3', '/Assets/Images/Songs/ndt.jpg', 250);
 
-PRINT N'Đã khởi tạo Database và hơn 100 bài hát thành công!';
+PRINT N'Đã khởi tạo Database và bài hát thành công!';
 
--- =============================================
--- PHẦN 3: TẠO DỮ LIỆU ĐỘNG (RANDOM VIEW & FAVORITES)
--- =============================================
 
--- D. Random Lượt nghe cho bài hát
-UPDATE Songs
-SET ViewCount = ABS(CHECKSUM(NEWID()) % 5000000) + 10000;
 
--- E. Thủ tục (Stored Procedure) để tự động thả tim ảo
-GO
-CREATE PROCEDURE sp_TuDongThaTim
-    @TyLePhanTram INT = 30 -- Mặc định mỗi user like 30% số bài
-AS
-BEGIN
-    SET NOCOUNT ON;
-    PRINT N'Đang thả tim ảo...';
-
-    DECLARE @Count INT;
-
-    INSERT INTO Favorites (UserID, SongID, AddedAt)
-    SELECT 
-        u.UserID,
-        s.SongID,
-        DATEADD(DAY, -ABS(CHECKSUM(NEWID()) % 365), GETDATE()) -- Ngày like random 1 năm qua
-    FROM Users u
-    CROSS JOIN Songs s 
-    WHERE 
-        (ABS(CHECKSUM(NEWID()) % 100)) < @TyLePhanTram
-        AND NOT EXISTS (
-            SELECT 1 FROM Favorites f 
-            WHERE f.UserID = u.UserID AND f.SongID = s.SongID
-        );
-
-    SET @Count = @@ROWCOUNT;
-    PRINT N'Đã thả tim thành công cho ' + CAST(@Count AS NVARCHAR) + N' lượt!';
-END
-GO
-
--- F. Chạy thủ tục thả tim (20%)
-EXEC sp_TuDongThaTim 20;
 
 -- G. Dữ liệu mẫu thủ công cho Admin và User chính (Để test chức năng Yêu thích)
 -- Giả sử ID 1 là admin, ID 2 là nghia
@@ -308,35 +270,3 @@ INSERT INTO Favorites (UserID, SongID) VALUES (2, 1); -- Nghĩa like bài 1
 INSERT INTO Favorites (UserID, SongID) VALUES (2, 2); -- Nghĩa like bài 2
 INSERT INTO Favorites (UserID, SongID) VALUES (2, 5); -- Nghĩa like bài 5
 GO
-
--- =============================================
--- PHẦN 4: KIỂM TRA KẾT QUẢ VÀ TRUY VẤN MẪU
--- =============================================
-
-PRINT N'------ TOP 10 BÀI HÁT NHIỀU TIM NHẤT ------';
-SELECT TOP 10
-    s.Title AS [Tên Bài Hát],
-    a.Name AS [Ca Sĩ],
-    COUNT(f.UserID) AS [Số Lượt Tim],
-    s.ViewCount AS [Lượt Xem]
-FROM Songs s
-LEFT JOIN Favorites f ON s.SongID = f.SongID
-LEFT JOIN Artists a ON s.ArtistID = a.ArtistID
-GROUP BY s.SongID, s.Title, a.Name, s.ViewCount
-ORDER BY [Số Lượt Tim] DESC;
-
-PRINT N'------ DANH SÁCH BÀI HÁT YÊU THÍCH CỦA USER "nghia" ------';
-SELECT 
-    s.SongID, 
-    s.Title, 
-    a.Name AS ArtistName, 
-    s.Url, 
-    s.Image, 
-    s.Duration,
-    f.AddedAt
-FROM Favorites f
-JOIN Songs s ON f.SongID = s.SongID
-JOIN Artists a ON s.ArtistID = a.ArtistID
-JOIN Users u ON f.UserID = u.UserID
-WHERE u.Username = 'nghia'
-ORDER BY f.AddedAt DESC;

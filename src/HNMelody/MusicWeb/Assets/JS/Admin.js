@@ -78,8 +78,8 @@
                 <td class="text-truncate" title="${s.img}">${s.img}</td>
 
                 <td>
-                    <button class="btn-action btn-edit" onclick="admin.editSong(${s.id})">Sửa</button>
-                    <button class="btn-action btn-del" onclick="admin.deleteSong(${s.id})">Xóa</button>
+                    <button type="button" class="btn-action btn-edit" onclick="admin.editSong(${s.id})">Sửa</button>
+                    <button type="button" class="btn-action btn-del" onclick="admin.deleteSong(${s.id})">Xóa</button>
                 </td>
             </tr>
         `).join('');
@@ -113,8 +113,8 @@
                 <td>${a.id}</td>
                 <td><b>${a.name}</b></td>
                 <td>
-                    <button class="btn-action btn-edit" onclick="admin.editArtist(${a.id})">Sửa</button>
-                    <button class="btn-action btn-del" onclick="admin.deleteArtist(${a.id})">Xóa</button>
+                    <button type="button" class="btn-action btn-edit" onclick="admin.editArtist(${a.id})">Sửa</button>
+                    <button type="button" class="btn-action btn-del" onclick="admin.deleteArtist(${a.id})">Xóa</button>
                 </td>
             </tr>
         `).join('');
@@ -207,7 +207,7 @@
 
         // --- XỬ LÝ ĐƯỜNG DẪN: Chỉ hiện tên file ---
         // Ví dụ: /Assets/Music/LacTroi.mp3 -> Chỉ hiện LacTroi.mp3
-        let cleanUrl = s.url.replace('/Assets/Music/', '');
+        let cleanUrl = s.url.replace('/Assets/Songs/', '');
         let cleanImg = s.img.replace('/Assets/Images/Songs/', '');
 
         document.getElementById('txtUrl').value = cleanUrl;

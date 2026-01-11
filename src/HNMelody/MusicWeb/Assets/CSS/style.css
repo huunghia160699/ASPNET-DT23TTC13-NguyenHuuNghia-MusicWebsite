@@ -392,7 +392,7 @@ body {
     box-shadow: 0 20px 50px rgba(0,0,0,0.3);
     backdrop-filter: blur(50px);
     width: 80%; /* Giới hạn kích thước đĩa */
-    max-width: 400px;
+    max-width: 5    00px;
 }
 
 .vinyl-disk {
@@ -529,7 +529,7 @@ body {
     border: none;
     background: transparent;
     color: var(--text-gray);
-    font-size: 2.4rem;
+    font-size: 3rem;
     cursor: pointer;
     border-radius: 50%;
     transition: 0.2s;
@@ -558,7 +558,7 @@ body {
     color: #000;
     border-radius: 50%;
     border: none;
-    font-size: 2.8rem;
+    font-size: 3.2rem;
     cursor: pointer;
     box-shadow: 0 0 20px rgba(255,255,255,0.3);
     transition: 0.2s;
@@ -907,6 +907,33 @@ body {
         align-items: center;
         gap: 5px;
     }
+
+/* Nút tim trong danh sách bài hát */
+.btn-fav {
+    padding: 10px;
+    font-size: 2rem;
+    color: #888; /* Màu xám khi chưa like */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: auto; /* Đẩy sang phải cùng */
+    margin-right: 10px;
+    z-index: 2; /* Để nằm trên lớp click bài hát */
+}
+
+    .btn-fav:hover {
+        color: #fff;
+        transform: scale(1.2);
+    }
+
+    /* Khi đã like (class active) */
+    .btn-fav.active {
+        color: #e74c3c; /* Màu đỏ tim */
+    }
+
+/* Ẩn Tab Yêu thích mặc định (khi chưa đăng nhập) */
+#tabFav {
+    display: none;
+}
 
 /* Cột 4: Thời lượng */
 .song-duration {
